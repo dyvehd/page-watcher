@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import sys
+import signal
 from src.config import load_config
 from src.scheduler import WatcherScheduler
 
@@ -41,6 +42,22 @@ async def main():
     logger = logging.getLogger("main")
     logger.info("Initializing Page Watcher Service...")
 
+    # Set up graceful shutdown handlers for SIGTERM and SIGINT
+    loop = asyncio.get_running_loop()
+    
+    def handle_shutdown(sig):
+        logger.info(f"Received exit signal {sig.name}. Stopping daemon gracefully...")
+        # Cancel all running tasks to unwind the event loop
+        for task in asyncio.all_tasks(loop):
+            task.cancel()
+
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        try:
+            loop.add_signal_handler(sig, lambda s=sig: handle_shutdown(s))
+        except NotImplementedError:
+            # Signals might not be supported on Windows
+            pass
+
     try:
         config = load_config(args.config)
         logger.info(f"Loaded config from: {args.config}")
@@ -62,6 +79,6 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nService interrupted by user. Exiting.")
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        print("\nService stopped gracefully. Exiting.")
         sys.exit(0)
