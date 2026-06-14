@@ -53,6 +53,7 @@ class AppConfig(BaseModel):
     discord_webhook_url: str
     check_interval_seconds: int = 1800
     save_screenshots: bool = True
+    error_retry_threshold: int = 3
     groups: Dict[str, GroupConfig]
 
 def load_config(config_path: str = "config.yaml") -> AppConfig:

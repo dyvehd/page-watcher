@@ -46,6 +46,7 @@ class TestConfig(unittest.TestCase):
         self.assertIsInstance(config, AppConfig)
         self.assertEqual(config.discord_webhook_url, "https://discord.com/api/webhooks/mock")
         self.assertEqual(config.check_interval_seconds, 600)
+        self.assertEqual(config.error_retry_threshold, 3) # default value
         self.assertIn("group1", config.groups)
         
         group = config.groups["group1"]
@@ -62,6 +63,14 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(page.selector, "#content")
         self.assertEqual(page.exclude, [".time"])
         self.assertEqual(page.check_interval_seconds, 300)
+
+    def test_custom_retry_threshold(self):
+        self.mock_config["error_retry_threshold"] = 5
+        with open(self.test_config_path, "w", encoding="utf-8") as f:
+            yaml.dump(self.mock_config, f)
+            
+        config = load_config(self.test_config_path)
+        self.assertEqual(config.error_retry_threshold, 5)
 
     def test_invalid_action_raises(self):
         # Change action to an invalid value

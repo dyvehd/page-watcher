@@ -10,6 +10,9 @@ check_interval_seconds: 180
 # Whether to save screenshots on changes by default (can be overridden on group/page level)
 save_screenshots: true
 
+# Number of consecutive check failures required before sending a Discord alert
+error_retry_threshold: 3
+
 # Groups of pages to watch. Share configuration like login recipes and credentials.
 groups:
   LMS:

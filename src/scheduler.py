@@ -21,6 +21,7 @@ class WatcherScheduler:
         # Keep track of active tasks and error states in memory to avoid spamming alerts
         self.running_tasks: Set[Tuple[str, str]] = set()
         self.failed_pages: Dict[Tuple[str, str], str] = {} # (group_key, page_key) -> last_error_message
+        self.failure_counts: Dict[Tuple[str, str], int] = {} # (group_key, page_key) -> consecutive_failure_count
 
     def _get_page_interval(self, page_config: PageConfig) -> int:
         """Determines the check interval in seconds for a page."""
@@ -156,6 +157,7 @@ class WatcherScheduler:
                     )
             
             # Clear from error state memory if it succeeded
+            self.failure_counts[task_id] = 0
             if task_id in self.failed_pages:
                 del self.failed_pages[task_id]
                 logger.info(f"Page {page_config.name} recovered from previous failures.")
@@ -164,14 +166,22 @@ class WatcherScheduler:
             error_msg = str(e)
             logger.error(f"Error checking page {page_config.name}: {error_msg}", exc_info=True)
             
-            # Only notify on transition to failed state (or if the error message changed)
-            if self.failed_pages.get(task_id) != error_msg:
-                self.failed_pages[task_id] = error_msg
-                await self.notifier.send_error_notification(
-                    group_name=group_config.name,
-                    page_name=page_config.name,
-                    error_msg=error_msg
-                )
+            # Increment failure count
+            self.failure_counts[task_id] = self.failure_counts.get(task_id, 0) + 1
+            consecutive_failures = self.failure_counts[task_id]
+            threshold = self.config.error_retry_threshold
+            
+            logger.info(f"Page {page_config.name} failed check. Consecutive failures: {consecutive_failures}/{threshold}")
+            
+            if consecutive_failures >= threshold:
+                # Only notify on transition to failed state (consecutive_failures == threshold) or if the error message changed
+                if self.failed_pages.get(task_id) != error_msg:
+                    self.failed_pages[task_id] = error_msg
+                    await self.notifier.send_error_notification(
+                        group_name=group_config.name,
+                        page_name=f"{page_config.name} ({consecutive_failures} consecutive failures)",
+                        error_msg=error_msg
+                    )
             
             # Update check timestamp even if it failed so we don't spam the server continuously in a tight loop
             self.db.update_page_check(group_key, page_config.key, content_hash=None, did_change=False)
