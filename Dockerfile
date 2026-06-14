@@ -21,6 +21,7 @@ RUN python -m camoufox fetch
 # Copy the rest of the application code
 COPY src /app/src
 COPY config.yaml /app/
+COPY site_specific /app/site_specific
 
 # Create folders for screenshots and database storage
 RUN mkdir -p /app/screenshots /app/data

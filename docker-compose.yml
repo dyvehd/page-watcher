@@ -10,6 +10,8 @@ services:
     volumes:
       # Mount the configuration file from the host so it can be updated without rebuilding the container
       - ./config.yaml:/app/config.yaml:ro
+      # Mount site-specific custom handlers/plugins
+      - ./site_specific:/app/site_specific:ro
       # Persist SQLite database on the host
       - ./data:/app/data
       # Save screenshots on the host for access/review

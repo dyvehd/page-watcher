@@ -2,10 +2,13 @@
 # Copy this file to config.yaml and fill in your actual credentials.
 
 # Discord webhook URL where notifications will be sent
-discord_webhook_url: "YOUR_DISCORD_WEBHOOK_URL_HERE"
+discord_webhook_url: "YOUR_DISCORD_WEBHOOK_URL"
 
 # Default interval in seconds between checks if not specified on the page level
 check_interval_seconds: 180
+
+# Whether to save screenshots on changes by default (can be overridden on group/page level)
+save_screenshots: true
 
 # Groups of pages to watch. Share configuration like login recipes and credentials.
 groups:
@@ -18,10 +21,10 @@ groups:
           url: "https://sso.hcmut.edu.vn/cas/login?service=https%3A%2F%2Flms.hcmut.edu.vn%2Flogin%2Findex.php%3FauthCAS%3DCAS"
         - action: "fill"
           selector: "#username"
-          value: "YOUR_SSO_USERNAME_HERE"
+          value: "YOUR_SSO_USERNAME"
         - action: "fill"
           selector: "#password"
-          value: "YOUR_SSO_PASSWORD_HERE"
+          value: "YOUR_SSO_PASSWORD"
         - action: "click"
           selector: "[type='submit']"
         - action: "wait_for_url"
@@ -89,6 +92,7 @@ groups:
 
   MyBK:
     name: "HCMUT MyBK"
+    api_handler: "site_specific/MyBK_app/handler.py"
     login:
       type: "recipe"
       recipe:
@@ -96,10 +100,10 @@ groups:
           url: "http://sso.hcmut.edu.vn/cas/login?service=https%3A%2F%2Fmybk.hcmut.edu.vn%2Fapp%2Flogin%2Fcas"
         - action: "fill"
           selector: "#username"
-          value: "YOUR_SSO_USERNAME_HERE"
+          value: "YOUR_SSO_USERNAME"
         - action: "fill"
           selector: "#password"
-          value: "YOUR_SSO_PASSWORD_HERE"
+          value: "YOUR_SSO_PASSWORD"
         - action: "click"
           selector: "[type='submit']"
         - action: "wait_for_url"
@@ -107,12 +111,12 @@ groups:
     pages:
       - key: "ctxh"
         name: "CTXH"
-        url: "https://mybk.hcmut.edu.vn/api/v1/student-activities/social-workdays/by-student-code/2310641"
+        url: "https://mybk.hcmut.edu.vn/api/v1/student-activities/social-workdays/by-student-code/YOUR_STUDENT_CODE"
 
       - key: "hb"
         name: "HB"
-        url: "https://mybk.hcmut.edu.vn/api/v1/student-scholarships/by-student-code/2310641"
+        url: "https://mybk.hcmut.edu.vn/api/v1/student-scholarships/by-student-code/YOUR_STUDENT_CODE"
 
       - key: "grades"
         name: "Grades"
-        url: "https://mybk.hcmut.edu.vn/api/v1/student/subject-grade/detail?studentId=213077&semesterYear=20252"
+        url: "https://mybk.hcmut.edu.vn/api/v1/student/subject-grade/detail?studentId=YOUR_STUDENT_ID&semesterYear=YOUR_SEMESTER"

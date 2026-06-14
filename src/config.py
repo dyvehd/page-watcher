@@ -46,6 +46,7 @@ class GroupConfig(BaseModel):
     login: LoginConfig
     pages: List[PageConfig]
     save_screenshot: Optional[bool] = None
+    api_handler: Optional[str] = None
 
 class AppConfig(BaseModel):
     discord_webhook_url: str

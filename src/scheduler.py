@@ -54,7 +54,8 @@ class WatcherScheduler:
                 page_config=page_config,
                 login_config=group_config.login,
                 db=self.db,
-                save_screenshot=save_screenshot
+                save_screenshot=save_screenshot,
+                api_handler=group_config.api_handler
             )
 
             # 2. Parse and clean HTML content

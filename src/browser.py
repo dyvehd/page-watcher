@@ -6,6 +6,7 @@ import importlib.util
 from typing import List, Dict, Any, Tuple, Optional
 from src.config import LoginRecipeStep, LoginConfig, PageConfig
 from src.database import Database
+from src.handlers import get_api_handler
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +155,8 @@ class BrowserManager:
         login_config: LoginConfig,
         db: Database,
         save_screenshot: bool = True,
-        screenshots_dir: str = "screenshots"
+        screenshots_dir: str = "screenshots",
+        api_handler: Optional[str] = None
     ) -> Tuple[str, Optional[str]]:
         """
         Loads the page, running the login recipe if necessary, saving/updating cookies,
@@ -165,7 +167,7 @@ class BrowserManager:
         """
         lock = self.get_group_lock(group_key)
         async with lock:
-            return await self._fetch_page_unlocked(group_key, page_config, login_config, db, save_screenshot, screenshots_dir)
+            return await self._fetch_page_unlocked(group_key, page_config, login_config, db, save_screenshot, screenshots_dir, api_handler)
 
     async def _fetch_page_unlocked(
         self,
@@ -174,7 +176,8 @@ class BrowserManager:
         login_config: LoginConfig,
         db: Database,
         save_screenshot: bool = True,
-        screenshots_dir: str = "screenshots"
+        screenshots_dir: str = "screenshots",
+        api_handler: Optional[str] = None
     ) -> Tuple[str, Optional[str]]:
         os.makedirs(screenshots_dir, exist_ok=True)
         
@@ -261,84 +264,25 @@ class BrowserManager:
                 is_api = "/api/" in page_config.url
                 
                 if is_api:
-                    logger.info(f"Fetching API page content via page.evaluate: {page_config.url}")
-                    # Ensure we are on the correct origin
-                    target_origin = urllib.parse.urlunparse(urllib.parse.urlparse(page_config.url)[:2] + ('/app/', '', '', ''))
-                    current_origin = urllib.parse.urlunparse(urllib.parse.urlparse(page.url)[:2] + ('', '', '', ''))
-                    if target_origin != current_origin:
-                        logger.info(f"Navigating to origin {target_origin} to execute API fetch...")
-                        await page.goto(target_origin, wait_until="networkidle")
-                    
-                    # Run fetch inside page context
-                    api_data = await page.evaluate(r"""async (url) => {
-                        const findJwt = (obj) => {
-                            if (!obj) return null;
-                            if (typeof obj === 'string') {
-                                const match = obj.match(/eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/);
-                                if (match) return match[0];
-                                if (obj.startsWith("eyJ") && obj.split('.').length >= 3) return obj;
-                                return null;
-                            }
-                            if (typeof obj === 'object') {
-                                for (let key in obj) {
-                                    try {
-                                        const res = findJwt(obj[key]);
-                                        if (res) return res;
-                                    } catch (e) {}
-                                }
-                            }
-                            return null;
-                        };
-
-                        let authHeader = "";
+                    if api_handler:
+                        logger.info(f"Using custom API handler: {api_handler}")
+                        if not os.path.exists(api_handler):
+                            raise FileNotFoundError(f"Custom API handler script not found at: {api_handler}")
+                            
+                        spec = importlib.util.spec_from_file_location("custom_api_handler_module", api_handler)
+                        if not spec or not spec.loader:
+                            raise ImportError(f"Failed to load module spec for: {api_handler}")
+                            
+                        module = importlib.util.module_from_spec(spec)
+                        spec.loader.exec_module(module)
                         
-                        // 1. Search in localStorage
-                        for (let i = 0; i < localStorage.length; i++) {
-                            let k = localStorage.key(i);
-                            let v = localStorage.getItem(k);
-                            if (!v) continue;
-                            let token = findJwt(v);
-                            if (token) { authHeader = token; break; }
-                            try {
-                                let parsed = JSON.parse(v);
-                                let tokenInJson = findJwt(parsed);
-                                if (tokenInJson) { authHeader = tokenInJson; break; }
-                            } catch (e) {}
-                        }
-                        
-                        // 2. Search in sessionStorage if not found
-                        if (!authHeader) {
-                            for (let i = 0; i < sessionStorage.length; i++) {
-                                let k = sessionStorage.key(i);
-                                let v = sessionStorage.getItem(k);
-                                if (!v) continue;
-                                let token = findJwt(v);
-                                if (token) { authHeader = token; break; }
-                                try {
-                                    let parsed = JSON.parse(v);
-                                    let tokenInJson = findJwt(parsed);
-                                    if (tokenInJson) { authHeader = tokenInJson; break; }
-                                } catch (e) {}
-                            }
-                        }
-
-                        // 3. Search in cookies if not found
-                        if (!authHeader) {
-                            let token = findJwt(document.cookie);
-                            if (token) { authHeader = token; }
-                        }
-                        
-                        const headers = { 'accept': 'application/json' };
-                        if (authHeader) {
-                            headers['authorization'] = authHeader.startsWith('Bearer ') ? authHeader : `Bearer ${authHeader}`;
-                        }
-                        
-                        const r = await fetch(url, { headers });
-                        if (!r.ok) {
-                            throw new Error(`API fetch failed with status: ${r.status}`);
-                        }
-                        return await r.text();
-                    }""", page_config.url)
+                        if not hasattr(module, "fetch_api"):
+                            raise AttributeError(f"Custom API handler {api_handler} must define an async function 'fetch_api(page, api_url)'")
+                            
+                        api_data = await module.fetch_api(page, page_config.url)
+                    else:
+                        handler = get_api_handler(page_config.url)
+                        api_data = await handler.fetch_api(page, page_config.url)
                     
                     # Display JSON content inside pre tag for screenshots
                     await page.evaluate("""(data) => {
