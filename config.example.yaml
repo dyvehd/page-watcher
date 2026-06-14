@@ -1,0 +1,118 @@
+# Page Watcher Configuration Template
+# Copy this file to config.yaml and fill in your actual credentials.
+
+# Discord webhook URL where notifications will be sent
+discord_webhook_url: "YOUR_DISCORD_WEBHOOK_URL_HERE"
+
+# Default interval in seconds between checks if not specified on the page level
+check_interval_seconds: 180
+
+# Groups of pages to watch. Share configuration like login recipes and credentials.
+groups:
+  LMS:
+    name: "HCMUT LMS"
+    login:
+      type: "recipe"
+      recipe:
+        - action: "navigate"
+          url: "https://sso.hcmut.edu.vn/cas/login?service=https%3A%2F%2Flms.hcmut.edu.vn%2Flogin%2Findex.php%3FauthCAS%3DCAS"
+        - action: "fill"
+          selector: "#username"
+          value: "YOUR_SSO_USERNAME_HERE"
+        - action: "fill"
+          selector: "#password"
+          value: "YOUR_SSO_PASSWORD_HERE"
+        - action: "click"
+          selector: "[type='submit']"
+        - action: "wait_for_url"
+          value: "https://lms.hcmut.edu.vn/**"
+    pages:
+      - key: "ppl_main"
+        name: "PPL main"
+        url: "https://lms.hcmut.edu.vn/course/view.php?id=130424"
+        selector: "#region-main"
+
+      - key: "ppl_grade"
+        name: "PPL grade"
+        url: "https://lms.hcmut.edu.vn/grade/report/user/index.php?id=130424"
+        selector: "#region-main"
+
+      - key: "ppl_assignments"
+        name: "PPL assignments"
+        url: "https://lms.hcmut.edu.vn/course/view.php?id=62599"
+        selector: "#region-main"
+
+      - key: "ppl_assignment_grade"
+        name: "PPL assignment grade"
+        url: "https://lms.hcmut.edu.vn/grade/report/user/index.php?id=62599"
+        selector: "#region-main"
+
+      - key: "dacn_main"
+        name: "DACN main"
+        url: "https://lms.hcmut.edu.vn/course/view.php?id=136337"
+        selector: "#region-main"
+
+      - key: "dacn_grade"
+        name: "DACN grade"
+        url: "https://lms.hcmut.edu.vn/grade/report/user/index.php?id=136337"
+        selector: "#region-main"
+
+      - key: "ml_main"
+        name: "ML main"
+        url: "https://lms.hcmut.edu.vn/course/view.php?id=131854"
+        selector: "#region-main"
+
+      - key: "ml_grade"
+        name: "ML grade"
+        url: "https://lms.hcmut.edu.vn/grade/report/user/index.php?id=131854"
+        selector: "#region-main"
+
+      - key: "qlda_main"
+        name: "QLDA main"
+        url: "https://lms.hcmut.edu.vn/course/view.php?id=131044"
+        selector: "#region-main"
+
+      - key: "qlda_grade"
+        name: "QLDA grade"
+        url: "https://lms.hcmut.edu.vn/grade/report/user/index.php?id=131044"
+        selector: "#region-main"
+
+      - key: "lsd_main"
+        name: "LSD main"
+        url: "https://lms.hcmut.edu.vn/course/view.php?id=131976"
+        selector: "#region-main"
+
+      - key: "lsd_grade"
+        name: "LSD grade"
+        url: "https://lms.hcmut.edu.vn/grade/report/user/index.php?id=131976"
+        selector: "#region-main"
+
+  MyBK:
+    name: "HCMUT MyBK"
+    login:
+      type: "recipe"
+      recipe:
+        - action: "navigate"
+          url: "http://sso.hcmut.edu.vn/cas/login?service=https%3A%2F%2Fmybk.hcmut.edu.vn%2Fapp%2Flogin%2Fcas"
+        - action: "fill"
+          selector: "#username"
+          value: "YOUR_SSO_USERNAME_HERE"
+        - action: "fill"
+          selector: "#password"
+          value: "YOUR_SSO_PASSWORD_HERE"
+        - action: "click"
+          selector: "[type='submit']"
+        - action: "wait_for_url"
+          value: "https://mybk.hcmut.edu.vn/app/**"
+    pages:
+      - key: "ctxh"
+        name: "CTXH"
+        url: "https://mybk.hcmut.edu.vn/api/v1/student-activities/social-workdays/by-student-code/2310641"
+
+      - key: "hb"
+        name: "HB"
+        url: "https://mybk.hcmut.edu.vn/api/v1/student-scholarships/by-student-code/2310641"
+
+      - key: "grades"
+        name: "Grades"
+        url: "https://mybk.hcmut.edu.vn/api/v1/student/subject-grade/detail?studentId=213077&semesterYear=20252"

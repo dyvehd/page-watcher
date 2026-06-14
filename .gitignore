@@ -1,0 +1,39 @@
+# --- Project Specific Data/Outputs ---
+screenshots/
+data/
+*.log
+
+# --- Credentials & Configurations ---
+# Ignore the active config.yaml containing passwords and webhook URLs.
+# Refer to config.example.yaml for the required schema instead.
+config.yaml
+*.local.yaml
+.env
+*.env
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# --- Virtual Environments ---
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# --- IDEs / Editors ---
+.vscode/
+.specstory/
+.idea/
+*.swp
+*~
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
