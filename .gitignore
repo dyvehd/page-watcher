@@ -2,6 +2,7 @@
 screenshots/
 data/
 *.log
+*.db
 
 # --- Credentials & Configurations ---
 # Ignore the active config.yaml containing passwords and webhook URLs.
