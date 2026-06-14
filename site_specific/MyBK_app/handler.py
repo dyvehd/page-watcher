@@ -96,14 +96,52 @@ async def fetch_api(page, api_url: str) -> str:
             }
         }
         
+        if (!authHeader) {
+            throw new Error("SESSION_EXPIRED");
+        }
+
+        try {
+            const parts = authHeader.replace("Bearer ", "").split('.');
+            if (parts.length >= 3) {
+                const payload = JSON.parse(atob(parts[1]));
+                if (payload.exp) {
+                    const now = Math.floor(Date.now() / 1000);
+                    if (payload.exp < now) {
+                        throw new Error("SESSION_EXPIRED");
+                    }
+                }
+            }
+        } catch(e) {
+            if (e.message === "SESSION_EXPIRED") throw e;
+        }
+        
         const headers = { 'accept': 'application/json' };
         if (authHeader) {
             headers['authorization'] = authHeader.startsWith('Bearer ') ? authHeader : `Bearer ${authHeader}`;
         }
         
         const r = await fetch(url, { headers });
+        
+        // 1. Check HTTP status code
+        if (r.status === 401 || r.status === 403) {
+            throw new Error("SESSION_EXPIRED");
+        }
+        
+        const text = await r.text();
+        
+        // 2. Check JSON payload error codes
+        try {
+            const json = JSON.parse(text);
+            const errCode = String(json.code || json.status || "");
+            if (errCode === "401" || errCode === "403") {
+                throw new Error("SESSION_EXPIRED");
+            }
+        } catch(e) {
+            if (e.message === "SESSION_EXPIRED") throw e;
+        }
+        
         if (!r.ok) {
             throw new Error(`API fetch failed with status: ${r.status}`);
         }
-        return await r.text();
+        return text;
     }""", api_url)

@@ -179,6 +179,28 @@ class BrowserManager:
         screenshots_dir: str = "screenshots",
         api_handler: Optional[str] = None
     ) -> Tuple[str, Optional[str]]:
+        for attempt in range(2):
+            try:
+                return await self._do_fetch_page_unlocked(
+                    group_key, page_config, login_config, db, save_screenshot, screenshots_dir, api_handler
+                )
+            except Exception as e:
+                if "SESSION_EXPIRED" in str(e) and attempt == 0:
+                    logger.warning(f"Session expired detected for group {group_key}. Clearing saved session and retrying...")
+                    db.save_group_session(group_key, [], {})
+                    continue
+                raise
+
+    async def _do_fetch_page_unlocked(
+        self,
+        group_key: str,
+        page_config: PageConfig,
+        login_config: LoginConfig,
+        db: Database,
+        save_screenshot: bool = True,
+        screenshots_dir: str = "screenshots",
+        api_handler: Optional[str] = None
+    ) -> Tuple[str, Optional[str]]:
         os.makedirs(screenshots_dir, exist_ok=True)
         
         # Load existing session cookies/localStorage from SQLite
@@ -298,6 +320,9 @@ class BrowserManager:
                     if needs_login or not page.url.startswith(page_config.url):
                         logger.info(f"Navigating to watch page: {page_config.url}")
                         await page.goto(page_config.url, wait_until="networkidle")
+                        
+                        if "login" in page.url.lower() or "sso" in page.url.lower():
+                            raise ValueError("SESSION_EXPIRED: Redirected to login page during fetch.")
                     
                     # If a page-level selector is configured, wait for it to render
                     if page_config.selector:
