@@ -23,6 +23,7 @@ class LoginConfig(BaseModel):
     recipe: Optional[List[LoginRecipeStep]] = Field(default_factory=list)
     script_path: Optional[str] = None
     credentials: Dict[str, Any] = Field(default_factory=dict)
+    session_verification_url: Optional[str] = None
 
     @field_validator('type')
     @classmethod

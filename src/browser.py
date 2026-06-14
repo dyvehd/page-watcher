@@ -210,13 +210,16 @@ class BrowserManager:
                 
                 if login_config.type in ("recipe", "script"):
                     if storage_state:
-                        # Try navigating directly to the page to see if we are already logged in
-                        is_api = "/api/" in page_config.url
-                        verify_url = page_config.url
-                        if is_api:
-                            # For API endpoints, verify session using the base dashboard URL
-                            parsed = urllib.parse.urlparse(page_config.url)
-                            verify_url = urllib.parse.urlunparse(parsed[:2] + ('/app/', '', '', ''))
+                        # Determine verification URL: use configured session_verification_url if present
+                        if login_config.session_verification_url:
+                            verify_url = login_config.session_verification_url
+                        else:
+                            is_api = "/api/" in page_config.url
+                            verify_url = page_config.url
+                            if is_api:
+                                # For API endpoints, verify session using the base dashboard URL
+                                parsed = urllib.parse.urlparse(page_config.url)
+                                verify_url = urllib.parse.urlunparse(parsed[:2] + ('/app/', '', '', ''))
                             
                         logger.info(f"Attempting direct navigation to verify active session: {verify_url}")
                         await page.goto(verify_url, wait_until="networkidle")

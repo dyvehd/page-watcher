@@ -14,6 +14,7 @@ class TestConfig(unittest.TestCase):
                     "name": "Test Group 1",
                     "login": {
                         "type": "recipe",
+                        "session_verification_url": "http://example.com/login-cas",
                         "recipe": [
                             {"action": "navigate", "url": "http://example.com/login"},
                             {"action": "fill", "selector": "#username", "value": "testuser"},
@@ -50,6 +51,7 @@ class TestConfig(unittest.TestCase):
         group = config.groups["group1"]
         self.assertEqual(group.name, "Test Group 1")
         self.assertEqual(group.login.type, "recipe")
+        self.assertEqual(group.login.session_verification_url, "http://example.com/login-cas")
         self.assertEqual(len(group.login.recipe), 3)
         self.assertEqual(group.login.recipe[0].action, "navigate")
         

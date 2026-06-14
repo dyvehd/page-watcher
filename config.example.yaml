@@ -16,6 +16,7 @@ groups:
     name: "HCMUT LMS"
     login:
       type: "recipe"
+      session_verification_url: "https://lms.hcmut.edu.vn/login/index.php?authCAS=CAS"
       recipe:
         - action: "navigate"
           url: "https://sso.hcmut.edu.vn/cas/login?service=https%3A%2F%2Flms.hcmut.edu.vn%2Flogin%2Findex.php%3FauthCAS%3DCAS"
@@ -95,6 +96,7 @@ groups:
     api_handler: "site_specific/MyBK_app/handler.py"
     login:
       type: "recipe"
+      session_verification_url: "https://mybk.hcmut.edu.vn/app/login?type=cas"
       recipe:
         - action: "navigate"
           url: "http://sso.hcmut.edu.vn/cas/login?service=https%3A%2F%2Fmybk.hcmut.edu.vn%2Fapp%2Flogin%2Fcas"
