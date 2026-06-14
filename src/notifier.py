@@ -24,8 +24,10 @@ class DiscordNotifier:
         """
         # Truncate diff to fit inside Discord embed field limit (1024 chars)
         max_diff_len = 950
+        is_truncated = False
         if len(diff_summary) > max_diff_len:
-            truncated_diff = diff_summary[:max_diff_len] + "\n... [diff truncated due to size] ..."
+            truncated_diff = diff_summary[:max_diff_len] + "\n... [diff truncated - see attached diff.txt] ..."
+            is_truncated = True
         else:
             truncated_diff = diff_summary
 
@@ -52,6 +54,9 @@ class DiscordNotifier:
         }
 
         files = {}
+        if is_truncated:
+            files["file2"] = ("diff.txt", diff_summary.encode("utf-8"), "text/plain")
+
         if screenshot_path and os.path.exists(screenshot_path):
             embed["image"] = {"url": "attachment://screenshot.png"}
             
