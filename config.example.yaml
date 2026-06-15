@@ -7,8 +7,11 @@ discord_webhook_url: "YOUR_DISCORD_WEBHOOK_URL"
 # Default interval in seconds between checks if not specified on the page level
 check_interval_seconds: 180
 
-# Whether to save screenshots on changes by default (can be overridden on group/page level)
-save_screenshots: true
+# Default behavior for screenshots. Can be:
+# - "on_change" (default): Take screenshots on check, only save/keep them when a change is detected.
+# - "always": Always keep screenshots on every check.
+# - "never": Do not capture screenshots.
+save_screenshots: "on_change"
 
 # Number of consecutive check failures required before sending a Discord alert
 error_retry_threshold: 3

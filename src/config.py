@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union, Literal
 import yaml
 from pydantic import BaseModel, Field, field_validator
 
@@ -40,19 +40,19 @@ class PageConfig(BaseModel):
     selector: Optional[str] = None
     exclude: List[str] = Field(default_factory=list)
     check_interval_seconds: Optional[int] = None
-    save_screenshot: Optional[bool] = None
+    save_screenshot: Optional[Union[bool, Literal["always", "on_change", "never"]]] = None
 
 class GroupConfig(BaseModel):
     name: str
     login: LoginConfig
     pages: List[PageConfig]
-    save_screenshot: Optional[bool] = None
+    save_screenshot: Optional[Union[bool, Literal["always", "on_change", "never"]]] = None
     api_handler: Optional[str] = None
 
 class AppConfig(BaseModel):
     discord_webhook_url: str
     check_interval_seconds: int = 1800
-    save_screenshots: bool = True
+    save_screenshots: Union[bool, Literal["always", "on_change", "never"]] = "on_change"
     error_retry_threshold: int = 3
     groups: Dict[str, GroupConfig]
 

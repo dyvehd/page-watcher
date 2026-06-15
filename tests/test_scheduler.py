@@ -83,5 +83,38 @@ class TestSchedulerRetry(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(scheduler.failure_counts[("testgroup", "testpage")], 0)
         self.assertNotIn(("testgroup", "testpage"), scheduler.failed_pages)
 
+    async def test_screenshot_policy(self):
+        page_config = PageConfig(key="testpage", name="Test Page", url="http://example.com/page")
+        group_config = GroupConfig(
+            name="Test Group",
+            login=LoginConfig(type="none"),
+            pages=[page_config]
+        )
+        
+        # Scenario 1: Global policy is False (never)
+        self.config.save_screenshots = False
+        scheduler = WatcherScheduler(self.config, db_path=":memory:")
+        self.assertEqual(scheduler._get_screenshot_policy(group_config, page_config), "never")
+        
+        # Scenario 2: Global policy is "on_change"
+        self.config.save_screenshots = "on_change"
+        scheduler = WatcherScheduler(self.config, db_path=":memory:")
+        self.assertEqual(scheduler._get_screenshot_policy(group_config, page_config), "on_change")
+        
+        # Scenario 3: Page config overrides to "always"
+        page_config.save_screenshot = "always"
+        self.assertEqual(scheduler._get_screenshot_policy(group_config, page_config), "always")
+        
+        # Scenario 4: Group config overrides to "never"
+        page_config.save_screenshot = None
+        group_config.save_screenshot = "never"
+        self.assertEqual(scheduler._get_screenshot_policy(group_config, page_config), "never")
+        
+        # Scenario 5: Boolean translation (True -> always, False -> never)
+        group_config.save_screenshot = True
+        self.assertEqual(scheduler._get_screenshot_policy(group_config, page_config), "always")
+        group_config.save_screenshot = False
+        self.assertEqual(scheduler._get_screenshot_policy(group_config, page_config), "never")
+
 if __name__ == "__main__":
     unittest.main()

@@ -29,13 +29,24 @@ class WatcherScheduler:
             return page_config.check_interval_seconds
         return self.config.check_interval_seconds
 
-    def _should_save_screenshot(self, group_config: GroupConfig, page_config: PageConfig) -> bool:
-        """Determines if a page should capture screenshots."""
+    def _get_screenshot_policy(self, group_config: GroupConfig, page_config: PageConfig) -> str:
+        """Determines the screenshot policy ('always', 'on_change', 'never') for a page."""
+        val = None
         if page_config.save_screenshot is not None:
-            return page_config.save_screenshot
-        if group_config.save_screenshot is not None:
-            return group_config.save_screenshot
-        return self.config.save_screenshots
+            val = page_config.save_screenshot
+        elif group_config.save_screenshot is not None:
+            val = group_config.save_screenshot
+        else:
+            val = self.config.save_screenshots
+
+        # Normalize to string
+        if val is True or val == "always":
+            return "always"
+        if val is False or val == "never":
+            return "never"
+        if val == "on_change":
+            return "on_change"
+        return "on_change" # Default fallback
 
     async def check_page(self, group_key: str, group_config: GroupConfig, page_config: PageConfig):
         """Executes a full watch check for a single page."""
@@ -49,7 +60,8 @@ class WatcherScheduler:
 
         try:
             # 1. Fetch raw HTML and screenshot
-            save_screenshot = self._should_save_screenshot(group_config, page_config)
+            policy = self._get_screenshot_policy(group_config, page_config)
+            save_screenshot = (policy != "never")
             html_content, screenshot_path = await self.browser_mgr.fetch_page(
                 group_key=group_key,
                 page_config=page_config,
@@ -111,8 +123,8 @@ class WatcherScheduler:
                 if old_hash == new_hash:
                     logger.info(f"No changes detected for: {page_config.name}")
                     self.db.update_page_check(group_key, page_config.key, content_hash=new_hash, did_change=False)
-                    # Clean up the unused screenshot to save space
-                    if screenshot_path and os.path.exists(screenshot_path):
+                    # Clean up the unused screenshot to save space if policy is 'on_change'
+                    if policy == "on_change" and screenshot_path and os.path.exists(screenshot_path):
                         try:
                             os.remove(screenshot_path)
                         except OSError:
